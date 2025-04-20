@@ -22,6 +22,7 @@ The developer is not responsible for any misuse**
 - **Timeout, User-Agent customization,** and **SSL verification** control.
 - **Proxy Support** , both for single proxy and for list of proxies.
 - **Logging**
+<br>
 
 ### Libraries Utilized :
 - requests
@@ -32,6 +33,15 @@ The developer is not responsible for any misuse**
 - logging
 - random
 - pyfiglet and shutil
+**Before running the tool, please once check if your system have these libraries installed.**
+<br>
+
+### Installation
+```
+git clone https://github.com/Mr-D-Smith/Web-Force.git
+cd Web-Force
+```
+<br>
 
 ### Optional Step
 **You can make Web Force accessible from anywhere utilizing these commands**
@@ -40,6 +50,7 @@ mv web_force.py web_force
 chmod +x web_force
 sudo mv web_force /usr/local/bin
 ```
+<br>
 
 ### Usage
 
@@ -79,6 +90,7 @@ python3 web_force.py -t http://target.com -u admin -w passwords.txt --no-verify
 ```
 python3 web_force.py -t http://target.com -u admin -w passwords.txt --log
 ```
+<br>
 
 ### Working :
 1. Reads the wordlist file line-by-line
