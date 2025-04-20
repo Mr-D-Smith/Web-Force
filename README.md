@@ -24,9 +24,10 @@ The developer is not responsible for any misuse**
 - argparse
 - threading
 - time
-- sys
+- sys and os
 - logging
 - random
+- pyfiglet and shutil
 
 ### Optional Step
 **You can make Web Force accessible from anywhere utilizing these commands**
