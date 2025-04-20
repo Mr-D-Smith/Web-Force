@@ -10,6 +10,7 @@ import logging
 import random
 import shutil
 import pyfiglet
+import os
 #Building Arguments
 parser= argparse.ArgumentParser(description="Web Force is a web app password bruteforce tool")
 parser.add_argument('-t','--target',required=True,help="Provide Target Url")
@@ -39,6 +40,8 @@ WHITE   = '\033[97m'
 RESET   = '\033[0m'
 BOLD    = '\033[1m'
 
+# Cleaning the screen
+os.system('cls' if os.name=='nt' else 'clear')
 
 #Telling User
 headers={'User-Agent':args.useragent} # building a header with a legit browser user-agent
